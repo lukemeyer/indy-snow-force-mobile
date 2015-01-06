@@ -20,6 +20,7 @@
         padding: 0;
         margin: 0;
         height: 100%;
+        font-family: sans-serif;
     }
     path[data-hours="8"] {
         stroke: rgb(12, 12, 12);
@@ -40,6 +41,35 @@
         stroke: rgb(172, 204, 82);
         stroke-width: 3pt;
         stroke-opacity: 1;
+    }
+    .black{
+        background-color: rgb(12, 12, 12);
+        color: #FFF;
+    }
+    .red{
+        background-color: rgb(193, 16, 16);
+        color: #FFF;
+    }
+    .yellow{
+        background-color: rgb(234, 225, 121);
+        color: #000;
+    }
+    .green{
+        background-color: rgb(172, 204, 82);
+        color: #000;
+    }
+    #key {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        background-color: #FFF;
+        padding: 5px;
+    }
+    .keybox {
+        display: inline-block;
+        padding: 2px;
+        margin: 2px;
+        font-weight: bold;
     }
     </style>
 
@@ -114,6 +144,13 @@
 
 <body>
     <div id="map"></div>
+    <div id="key">
+        Hours since plowed:
+        <div class="keybox green">less than 2</div>
+        <div class="keybox yellow">2-4</div>
+        <div class="keybox red">4-8</div>
+        <div class="keybox black">8+</div>
+    </div>
 </body>
 
 </html>
