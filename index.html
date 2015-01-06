@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>Unauthorized Mobile IndySnowForceViewer</title>
+
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <link rel="stylesheet" type="text/css" href="http://js.arcgis.com/3.11/esri/css/esri.css">
+
+    <style>
+    html,
+    body,
+    #map {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+    }
+    path[data-hours="8"] {
+        stroke: rgb(12, 12, 12);
+        stroke-width: 3pt;
+        stroke-opacity: 1;
+    }
+    path[data-hours="4"] {
+        stroke: rgb(193, 16, 16);
+        stroke-width: 3pt;
+        stroke-opacity: 1;
+    }
+    path[data-hours="2"] {
+        stroke: rgb(234, 225, 121);
+        stroke-width: 3pt;
+        stroke-opacity: 1;
+    }
+    path[data-hours="1"] {
+        stroke: rgb(172, 204, 82);
+        stroke-width: 3pt;
+        stroke-opacity: 1;
+    }
+    </style>
+
+    <script>
+    var dojoConfig = {
+        parseOnLoad: true
+    };
+    </script>
+    <script src="http://js.arcgis.com/3.11compact/"></script>
+    <script>
+    var map,
+        hourbreaks = [1, 2, 4, 8]
+
+    require(["esri/config", "esri/map", "esri/InfoTemplate", "esri/layers/ArcGISTiledMapServiceLayer", "esri/layers/FeatureLayer", "esri/Color", "dojox/mobile/parser", "dojo/dom-construct", "dojo/on", "dojo/domReady!"],
+        function(esriConfig, Map, InfoTemplate, Tiled, FeatureLayer, Color, parser, domConstruct, on) {
+            esriConfig.defaults.io.corsEnabledServers.push("imaps.indy.gov");
+            map = new Map("map", {
+              basemap: "streets",
+              center: [-86.075340, 39.779252],
+              zoom: 14,
+              logo: false,
+              minZoom: 12
+            });
+
+            var tiled = new Tiled("http://imaps.indy.gov/arcgis/rest/services/BaseHillshade/MapServer?f=json");
+            //map.addLayer(tiled);
+            map.on("load", initOperationalLayer);
+
+            function initOperationalLayer() {
+                var infoTemplate = new InfoTemplate("${CCGIS.DPWALLSNOWROUTES.STREET}", "${CCGIS.DPWALLSNOWROUTES.FROMDESC} to ${CCGIS.DPWALLSNOWROUTES.TODESC}<br>Plowed ${HoursSinceLastPlowed}hrs ago");
+                var featureLayer = new FeatureLayer("http://imaps.indy.gov/arcgis/rest/services/SnowRoutesForMonitoring/MapServer/0?f=json", {
+                    mode: FeatureLayer.MODE_ONDEMAND,
+                    outFields: ["*"],
+                    infoTemplate: infoTemplate,
+                    styling: false,
+                    dataAttributes: ["HoursSinceLastPlowed"]
+                });
+
+                if (featureLayer.surfaceType === "svg") {
+                    on(featureLayer, "graphic-draw", function(evt) {
+                        var hourClass = hourbreaks[3];
+                        if (evt.graphic.attributes.HoursSinceLastPlowed <= hourbreaks[1]) {
+                            hourClass = hourbreaks[0];
+                        } else if (evt.graphic.attributes.HoursSinceLastPlowed <= hourbreaks[2]) {
+                            hourClass = hourbreaks[1];
+                        } else if (evt.graphic.attributes.HoursSinceLastPlowed <= hourbreaks[3]) {
+                            hourClass = hourbreaks[2];
+                        }
+                        evt.node.setAttribute('data-hours', hourClass);
+                    });
+                }
+
+                map.addLayer(featureLayer);
+                map.infoWindow.resize(155, 75);
+            }
+        }
+    );
+    </script>
+
+</head>
+
+<body>
+    <div id="map"></div>
+</body>
+
+</html>
