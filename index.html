@@ -3,7 +3,7 @@
 
 <head>
 
-    <title>Unauthorized Mobile IndySnowForceViewer</title>
+    <title>Unofficial Indy Snow Force Viewer</title>
 
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no">
@@ -11,7 +11,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-    <link rel="stylesheet" type="text/css" href="http://js.arcgis.com/3.11/esri/css/esri.css">
+    <link rel="stylesheet" type="text/css" href="http://js.arcgis.com/3.14/esri/css/esri.css">
 
     <style>
     html,
@@ -21,6 +21,9 @@
         margin: 0;
         height: 100%;
         font-family: sans-serif;
+    }
+    html {
+        background-color: #F4F7F7;
     }
     path[data-hours="8"] {
         stroke: rgb(12, 12, 12);
@@ -89,10 +92,10 @@
         parseOnLoad: true
     };
     </script>
-    <script src="http://js.arcgis.com/3.11compact/"></script>
+    <script src="http://js.arcgis.com/3.14compact/"></script>
     <script>
     var map,
-        hourbreaks = [1, 2, 4, 8]
+        hourbreaks = [1, 2, 4, 8];
 
     require(["esri/config", "esri/map", "esri/InfoTemplate", "esri/layers/ArcGISTiledMapServiceLayer", "esri/layers/FeatureLayer", "esri/Color", "dojox/mobile/parser", "dojo/dom-construct", "dojo/on", "dojo/domReady!"],
         function(esriConfig, Map, InfoTemplate, Tiled, FeatureLayer, Color, parser, domConstruct, on) {
@@ -104,10 +107,8 @@
               logo: false,
               minZoom: 12
             });
-
-            var tiled = new Tiled("http://imaps.indy.gov/arcgis/rest/services/BaseHillshade/MapServer?f=json");
-            //map.addLayer(tiled);
-            map.on("load", initOperationalLayer);
+            
+            map.on("load", initLocalStorage);
 
             function initOperationalLayer() {
                 var infoTemplate = new InfoTemplate("${CCGIS.DPWALLSNOWROUTES.STREET}", "${CCGIS.DPWALLSNOWROUTES.FROMDESC} to ${CCGIS.DPWALLSNOWROUTES.TODESC}<br>Plowed ${HoursSinceLastPlowed}hrs ago");
@@ -134,7 +135,41 @@
                 }
 
                 map.addLayer(featureLayer);
-                map.infoWindow.resize(155, 75);
+            }
+            
+            function initLocalStorage() {
+                var ioWorker = new Worker("javascript/ioWorker.js");
+                ioWorker.onmessage = function(evt) {
+                    //console.log("Worker to Parent: ", evt.data[0]);
+                    try {
+                        localStorage.setItem(evt.data[0], evt.data[1]);
+                    } catch(error) {
+                        console.log('Problem adding tile to local storage. Storage might be full');
+                    }
+                };
+        
+                ioWorker.onerror = function(error) {
+                    //console.log("Worker to Parent: ", error);
+                };
+        
+                dojo.addOnUnload(function() {
+                    //localStorage.clear();
+                });
+        
+                dojo.extend(esri.layers.ArcGISTiledMapServiceLayer, {  //extend ArcGISTiledMapServiceLayer to use localStorage if available, else use worker to request tile and store in local storage.
+                getTileUrl : function(level, row, col) {
+                    var base = "http://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer";
+                    var url = base + "/tile/" + level + "/" + row + "/" + col;
+                    if (localStorage.getItem(url) !== null) {
+                        //console.log("in local storage");
+                        return "data:image;base64," + localStorage.getItem(url);
+                    } else {
+                        //console.log("not in local storage, pass url and load tile", url);
+                        ioWorker.postMessage([url]);
+                        return url;
+                    }
+                }});
+                initOperationalLayer(); //init map
             }
         }
     );
