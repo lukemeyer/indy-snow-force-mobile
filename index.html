@@ -125,6 +125,7 @@
     require(["esri/config", "esri/map", "esri/urlUtils", "esri/InfoTemplate", "esri/layers/ArcGISTiledMapServiceLayer", "esri/layers/FeatureLayer", "esri/Color", "dojox/mobile/parser", "dojo/dom-construct", "dojo/on", "dojo/domReady!"],
         function(esriConfig, Map, urlUtils, InfoTemplate, Tiled, FeatureLayer, Color, parser, domConstruct, on) {
             //esriConfig.defaults.io.corsEnabledServers.push("imaps.indy.gov");
+            esriConfig.defaults.io.corsDetection = false;
             esriConfig.defaults.io.proxyUrl = "https://maps.indy.gov/IndySnowForceViewer/ESRIProxy/proxy.ashx";
             esriConfig.defaults.io.alwaysUseProxy = false;
             urlUtils.addProxyRule({

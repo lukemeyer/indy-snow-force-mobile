@@ -173,6 +173,9 @@ self.addEventListener('fetch', function(event) {
 
         throw error;
       });
+    }).catch(function(error){
+      console.error('  Open Caches failed.',error);
+      throw error;
     })
   );
 });
